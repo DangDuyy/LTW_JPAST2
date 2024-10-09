@@ -6,11 +6,35 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<html>
-<head>
-    <title>Title</title>
-</head>
-<body>
+<form action="${pageContext.request.contextPath }/admin/video/insert" method="post" enctype="multipart/form-data">
+    <label for="images">Poster: </label><br>
+    <div style="width:100px; height:100px">
+        <img alt="images" id="imagess" src="" width="100px" height="100px" />
+    </div><br>
+    Nhập link: <input type="text" id="images1" name="images1"><br>
+    Hoặc tải file:
+    <input type="file" onchange="chooseFile(this)" id="images" name="images"><br>
 
-</body>
-</html>
+    <label for="videoid">Video ID:</label><br>
+    <input type="text" id="videoid" name="videoid"><br>
+
+    <label for="videotitle">Video Title:</label><br>
+    <input type="text" id="videotitle" name="videotitle"><br>
+
+    <label for="views">View Count:</label><br>
+    <input type="text" id="views" name="views"><br>
+
+    <label for="description">Description:</label><br>
+    <input type="text" id="description" name="description"><br>
+
+    <label for="categoryid">Category ID:</label><br>
+    <input type="text" id="categoryid" name="categoryid"><br>
+
+    <label for="status">Status: </label>
+    <input id="statuson" type="radio" name="status" value="1" ${video.active==1?'checked': ''}>
+    <label for="statuson">Hoạt động</label>
+    <input id="statusoff" type="radio" name="status" value="0" ${video.active==0?'checked': ''}>
+    <label for="statusoff">Khóa</label>
+
+    <br> <input type="submit" value="Submit">
+</form>

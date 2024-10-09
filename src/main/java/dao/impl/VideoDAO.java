@@ -11,6 +11,7 @@ import jakarta.persistence.TypedQuery;
 import java.util.List;
 
 public class VideoDAO implements IVideoDAO {
+
     @Override
     public void insert(Video video) {
         EntityManager enma = JPAConfig.getEntityManager();
@@ -55,7 +56,7 @@ public class VideoDAO implements IVideoDAO {
             if (video != null) {
                 enma.remove(video);
             } else {
-                throw new Exception("Not found");
+                throw new Exception("Không tìm thấy");
             }
             trans.commit();
         } catch (Exception e) {
@@ -70,21 +71,24 @@ public class VideoDAO implements IVideoDAO {
     @Override
     public Video findById(String videoid) {
         EntityManager enma = JPAConfig.getEntityManager();
-        return enma.find(Video.class, videoid);    }
+        return enma.find(Video.class, videoid);
+    }
 
     @Override
     public List<Video> findAll() {
         EntityManager enma = JPAConfig.getEntityManager();
         TypedQuery<Video> query = enma.createNamedQuery("Video.findAll", Video.class);
-        return query.getResultList();    }
+        return query.getResultList();
+    }
 
     @Override
-    public List<Video> findByVideoname(String title) {
+    public List<Video> findByVideoTitle(String vidtitle) {
         EntityManager enma = JPAConfig.getEntityManager();
-        String jpql = "SELECT v FROM Video v WHERE v.title LIKE :title";
+        String jpql = "SELECT v FROM Video v WHERE v.title LIKE :vidtitle";
         TypedQuery<Video> query = enma.createQuery(jpql, Video.class);
-        query.setParameter("title", "%" + title + "%");
-        return query.getResultList();    }
+        query.setParameter("vidtitle", "%" + vidtitle + "%");
+        return query.getResultList();
+    }
 
     @Override
     public List<Video> findAll(int page, int pagesize) {
@@ -101,6 +105,14 @@ public class VideoDAO implements IVideoDAO {
         String jpql = "SELECT count(v) FROM Video v";
         Query query = enma.createQuery(jpql);
         return ((Long) query.getSingleResult()).intValue();
+    }
 
+    @Override
+    public List<Video> findByCategoryId(int cateid) {
+        EntityManager enma = JPAConfig.getEntityManager();
+        String jpql = "SELECT v FROM Video v WHERE v.category.categoryId = :cateid";
+        TypedQuery<Video> query = enma.createQuery(jpql, Video.class);
+        query.setParameter("cateid", cateid);
+        return query.getResultList();
     }
 }

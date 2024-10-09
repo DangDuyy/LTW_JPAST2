@@ -1,6 +1,7 @@
 package controllers.admin;
 
 import entity.Category;
+import entity.Video;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,12 +10,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import services.ICategoryService;
+import services.IVideoService;
 import services.impl.CategoryService;
+import services.impl.VideoService;
 import utils.Constant;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -34,327 +38,178 @@ import java.util.List;
 
 public class VideoController extends HttpServlet {
 
-
-
     private static final long serialVersionUID = 1L;
-
-
-    ICategoryService cateService = new CategoryService();
-
+    public IVideoService videoService = new VideoService();
+    public ICategoryService cateService = new CategoryService();
 
     @Override
-
-
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-
+        String url = req.getRequestURI();
         req.setCharacterEncoding("UTF-8");
-
-
         resp.setCharacterEncoding("UTF-8");
 
-
-        String url = req.getRequestURI();
-
-
-        if(url.contains("categories")) {
-
-
-            List<Category> list = cateService.findAll();
-
-
-            req.setAttribute("listcate", list);
-
-
-            req.getRequestDispatcher("/views/admin/category-list.jsp").forward(req, resp);
-
-
-        }else if(url.contains("/admin/category/edit")) {
-
-
-            int id = Integer.parseInt(req.getParameter("id"));
-
-
-            Category category = cateService.findById(id);
-
-
-            req.setAttribute("cate", category);
-
-
-
-
-
-            req.getRequestDispatcher("/views/admin/category-edit.jsp").forward(req, resp);
-
-
-        }
-
-
-        else if(url.contains("/admin/category/add")) {
-
-
-            req.getRequestDispatcher("/views/admin/category-add.jsp").forward(req, resp);
-
-
-        }else if(url.contains("/admin/category/delete")) {
-
-
-            int id = Integer.parseInt(req.getParameter("id"));
-
-
-            try {
-
-
-                cateService.delete(id);
-
-
-            } catch (Exception e) {
-
-
-
-
-
-                e.printStackTrace();
-
-
+        if (url.contains("videos")) {
+            List<Video> list = new ArrayList<>();
+            String cateidString = req.getParameter("id");
+            int id = 0;
+            if (cateidString != null && !cateidString.trim().isEmpty()) {
+                try {
+                    id = Integer.parseInt(cateidString);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
             }
-
-
-            resp.sendRedirect(req.getContextPath() + "/admin/categories");
-
-
+            if (id != 0) {
+                list = videoService.findByCategoryId(id);
+            } else {
+                list = videoService.findAll();
+            }
+            req.setAttribute("listvideo", list);
+            req.getRequestDispatcher("/views/admin/video-list.jsp").forward(req, resp);
         }
-
-
+        else if (url.contains("add")) {
+            req.getRequestDispatcher("/views/admin/video-add.jsp").forward(req, resp);
+        }
+        else if (url.contains("edit")) {
+            String id = req.getParameter("id");
+            Video video = videoService.findById(id);
+            req.setAttribute("video", video);
+            req.getRequestDispatcher("/views/admin/video-edit.jsp").forward(req, resp);
+        }
+        else if (url.contains("delete")) {
+            String id = req.getParameter("id");
+            try {
+                videoService.delete(id);
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            resp.sendRedirect(req.getContextPath() + "/admin/videos");
+        }
     }
 
-
     @Override
-
-
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-
+        String url = req.getRequestURI();
         req.setCharacterEncoding("UTF-8");
-
-
         resp.setCharacterEncoding("UTF-8");
 
+        if (url.contains("insert")) {
 
-        String url = req.getRequestURI();
-
-
-        if(url.contains("/admin/category/update")) {
-
-
-            int categoryid = Integer.parseInt(req.getParameter("categoryid"));
-
-
-            String categoryname = req.getParameter("categoryname");
-
-
-            int status = Integer.parseInt(req.getParameter("status"));
-
-
-            Category category = new Category();
-
-
-            category.setCategoryId(categoryid);
-
-
-            category.setCategoryname(categoryname);
-
-
-            category.setStatus(status);
-
-
-            //lưu hình cũ
-
-
-            Category cateold = cateService.findById(categoryid);
-
-
-            String fileold = cateold.getImages();
-
-
-            //xử lý images
-
-
-            String fname="";
-
-
-            String uploadPath= Constant.UPLOAD_DIRECTORY;
-
-
-            File uploadDir = new File(uploadPath);
-
-
-            if(!uploadDir.exists()) {
-
-
-                uploadDir.mkdir();
-
-
+            String videoid = req.getParameter("videoid");
+            String title = req.getParameter("videotitle");
+            String des = req.getParameter("description");
+            int views = Integer.parseInt(req.getParameter("views"));
+            String statu = req.getParameter("status");
+            System.out.println(statu);
+            int status = Integer.parseInt(statu);
+            String cateidString = req.getParameter("categoryid");
+            int cateid = 0;
+            if (cateidString != null && !cateidString.trim().isEmpty()) {
+                try {
+                    cateid = Integer.parseInt(cateidString);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
             }
+            Category category = cateService.findById(cateid);
+            String images = req.getParameter("images1");
 
+            Video video = new Video();
+            video.setVideoId(videoid);
+            video.setTitle(title);
+            video.setActive(status);
+            video.setDescription(des);
+            video.setViews(views);
+            video.setCategory(category);
 
+            // Upload Images
+            String fname = "";
+            String uploadPath = Constant.DIR;
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdir();
+            }
             try {
-
-
                 Part part = req.getPart("images");
 
-
-                if(part.getSize()>0) {
-
-
+                if (part.getSize() > 0) {
                     String filename = Paths.get(part.getSubmittedFileName()).getFileName().toString();
-
-
-                    //đổi tên file
-
-
+                    // rename file
                     int index = filename.lastIndexOf(".");
-
-
                     String ext = filename.substring(index+1);
-
-
                     fname = System.currentTimeMillis() + "." + ext;
-
-
-                    //up load file
-
-
+                    // upload file
                     part.write(uploadPath + "/" + fname);
-
-
-                    //ghi tên file vào data
-
-
-                    category.setImages(fname);
-
-
-                }else {
-
-
-                    category.setImages(fileold);
-
-
+                    // ghi ten file vao data
+                    video.setPoster(fname);
                 }
-
-
+                else if(images != null) {
+                    video.setPoster(images);
+                }
+                else {
+                    video.setPoster("avatar.png");
+                }
             } catch (Exception e) {
-
-
+                // TODO: handle exception
                 e.printStackTrace();
-
-
             }
 
+            videoService.insert(video);
+            resp.sendRedirect(req.getContextPath() + "/admin/videos");
 
-            cateService.update(category);
-
-
-            resp.sendRedirect(req.getContextPath() + "/admin/categories");
-
-
-        }else if(url.contains("/admin/category/insert")) {
-
-
-            Category category = new Category();
-
-
-            String categoryname = req.getParameter("categoryname");
-
-
+        } else if (url.contains("update")) {
+            String videoid = req.getParameter("videoid");
+            String title = req.getParameter("videotitle");
+            String des = req.getParameter("description");
+            int views = Integer.parseInt(req.getParameter("views"));
             int status = Integer.parseInt(req.getParameter("status"));
+            int cateid = Integer.parseInt(req.getParameter("categoryid"));
+            Category category = cateService.findById(cateid);
 
+            Video video = new Video();
+            video.setVideoId(videoid);
+            video.setTitle(title);
+            video.setActive(status);
+            video.setDescription(des);
+            video.setViews(views);
+            video.setCategory(category);
 
-            category.setCategoryname(categoryname);
-
-
-            category.setStatus(status);
-
-
-            String fname="";
-
-
-            String uploadPath= Constant.UPLOAD_DIRECTORY;
-
-
+            // Giu hinh cu neu khong update
+            Video videoold = videoService.findById(videoid);
+            String fileold = videoold.getPoster();
+            // Upload Images
+            String fname = "";
+            String uploadPath = Constant.DIR;
             File uploadDir = new File(uploadPath);
-
-
-            if(!uploadDir.exists()) {
-
-
+            if (!uploadDir.exists()) {
                 uploadDir.mkdir();
-
-
             }
-
-
             try {
-
-
                 Part part = req.getPart("images");
-
-
-                if(part.getSize()>0) {
-
-
+                if (part.getSize() > 0) {
                     String filename = Paths.get(part.getSubmittedFileName()).getFileName().toString();
-
-
-                    //đổi tên file
-
-
+                    // rename file
                     int index = filename.lastIndexOf(".");
-
-
                     String ext = filename.substring(index+1);
-
-
                     fname = System.currentTimeMillis() + "." + ext;
-
-
-                    //up load file
-
-
+                    // upload file
                     part.write(uploadPath + "/" + fname);
-
-
-                    //ghi tên file vào data
-
-
-                    category.setImages(fname);
-
-
-                }else {
-
-
-                    category.setImages("avata.png");
-
-
+                    // ghi ten file vao data
+                    video.setPoster(fname);
+                } else {
+                    video.setPoster(fileold);
                 }
-
-
             } catch (Exception e) {
-
-
+                // TODO: handle exception
                 e.printStackTrace();
-
-
             }
 
-
-            cateService.insert(category);
-            resp.sendRedirect(req.getContextPath() + "/admin/categories");
-
-
+            videoService.update(video);
+            resp.sendRedirect(req.getContextPath() + "/admin/videos");
         }
-
-
     }
 
 

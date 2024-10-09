@@ -1,25 +1,26 @@
-package dao;
+package services;
 
 import entity.Video;
 
 import java.util.List;
 
-public interface IVideoDAO {
-    void insert(Video video);
-
-    void update(Video video);
+public interface IVideoService {
 
     void delete(String videoid) throws Exception;
 
-    Video findById(String videoid);
-
     List<Video> findAll();
 
-    List<Video> findByVideoTitle(String vidtitle);
+    Video findById(String videoid);
+
+    void update(Video video);
+
+    void insert(Video video);
+
+    int count();
 
     List<Video> findAll(int page, int pagesize);
 
-    int count();
+    List<Video> findByVideoTitle(String vidname);
 
     List<Video> findByCategoryId(int cateid);
 }
